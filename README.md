@@ -1,2 +1,2 @@
-# nlp-email-classification
-NLP candy canon
+## NLP Email Classification
+`NLP Project`
