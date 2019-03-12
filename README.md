@@ -28,10 +28,14 @@ After entering the interactive mode, run the following query.
 
 You are supposed to see the following output:
 
-| @@datadir |
-| --- |
+```
++ --------------- +
+|    @@datadir    |
+| --------------- |
 | /var/lib/mysql/ |
-| 1 row in set (0.00 sec) |
++ --------------- +
+1 row in set (0.00 sec)
+```
 
 `/var/lib/mysql` is where your current data directory is. After confirm this, type `quit` to exit the interactive mode.
 
