@@ -20,7 +20,7 @@ def login_server():
 
 def create_database(usr, pwd, db):
     cur = db.cursor()
-    # Determine whether database "Enron" exist.
+    # Determine whether database "Enron" exists.
     cur.execute("SHOW DATABASES")
     dbName = "Enron"
     existence = reduce(lambda x, y: x or y,
@@ -28,6 +28,9 @@ def create_database(usr, pwd, db):
     )
     if not existence:
         cur.execute("CREATE DATABASE " + dbName)
+        print("Successfully created database \"%s\"!" % dbName)
+    else:
+        print("Database \"%s\" already exists. Continue using the previous one." % dbName)
     cur.close()
     db.close()
 
