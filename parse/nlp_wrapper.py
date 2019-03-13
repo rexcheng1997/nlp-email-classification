@@ -57,10 +57,12 @@ class StanfordNLP:
 
 if __name__ == "__main__":
     nlp = StanfordNLP()
-    text = "A blog post using Stanford CoreNLP Server. Visit www.khalidalnajjar.com for more details."
+    text = """
+        Attached  are two files that illustrate the following: As prices rose, supply increased and demand decreased.  Now prices are beginning to fall in response these market responses.
+    """
     # print("Annotate:", nlp.annotate(text))
     print("POS:", nlp.pos(text))
-    print("Tokens:", nlp.word_tokenize(text))
-    print("NER:", nlp.ner(text))
-    print("Parse:",  nlp.parse(text))
-    print("Dep Parse:", nlp.dependency_parse(text))
+    # print("Tokens:", nlp.word_tokenize(text))
+    # print("NER:", nlp.ner(text))
+    # print("Parse:",  nlp.parse(text))
+    # print("Dep Parse:", nlp.dependency_parse(text))
