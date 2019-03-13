@@ -5,7 +5,7 @@
 
 __author__ = "rexcheng"
 
-import os, re
+import sys, os, re
 import nlp_wrapper as nlp
 
 regex = re.compile(r'^[\w\d\.\s\:\-\*<>@]+?Date: ([\w\d\s\,\:\-()]+?)\*\-\*.*?X-From: (.*?)\*\-\*X-To: (.*?)\*\-\*.*?FileName: (.*)$')
@@ -19,10 +19,10 @@ def process_content(content):
     words = [w[0] for w in result if (len(w[0]) > 1 and len(w[0]) < 21) and ("VB" in w[1] or "NN" in w[1])]
     return words
 
-def insert_database(info):
+def insert_database(db, info):
     pass
 
-def parse_mail(email, path):
+def parse_mail(email, path, db):
     """
         Parse the information in the emails using regualr expression.
     """
@@ -39,7 +39,7 @@ def parse_mail(email, path):
     # msg is the well-formatted body message of the emails, which will be stored in the database.
     msg = '\n'.join(contentList).replace("  ", ' ')
     # Insert the information into the database.
-    insert_database({
+    insert_database(db, {
         "date": date,
         "sender": sender,
         "receiver": receiver,
@@ -50,7 +50,7 @@ def parse_mail(email, path):
     words = process_content(content)
     return words
 
-def filter_emails():
+def filter_emails(db):
     """
         Retrieve all the emails from the dataset.
     """
@@ -78,13 +78,16 @@ def filter_emails():
         words = []
         for email in emails:
             with open(email, 'r') as f:
-                words = words + parse_mail(f.read().replace('\\', ' ').replace('\n', "*-*"), pathToFolder)
+                words = words + parse_mail(f.read().replace('\\', ' ').replace('\n', "*-*"), pathToFolder, db)
         # Write words to a csv file.
         with open(os.path.join(pathToFolder, "mail.csv"), 'w') as f:
             f.write(", ".join(words))
 
-    return pathToFolder
+    return employeeFolders
 
 
 if __name__ == "__main__":
-    filter_emails()
+    usr, pwd, enron = login_server()
+    enron = create_database(usr, pwd, enron)
+    # filter_emails(enron)
+    enron.close()
