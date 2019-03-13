@@ -47,7 +47,7 @@ def create_send(db):
             CREATE TABLE Send (
                 mid INT PRIMARY KEY,
                 eid INT NOT NULL UNIQUE,
-                date VARCHAR(100) NOT NULL,
+                date VARCHAR(50) NOT NULL,
                 FOREIGN KEY (mid) REFERENCES Messages(mid) ON DELETE CASCADE,
                 FOREIGN KEY (eid) REFERENCES Employees(eid) ON DELETE NO ACTION
             )
