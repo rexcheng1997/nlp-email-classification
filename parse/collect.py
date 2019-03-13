@@ -6,13 +6,16 @@
 __author__ = "rexcheng"
 
 import sys, os, re
-import nlp_wrapper as nlp
+from . import nlp_wrapper as nlp
 
 regex = re.compile(r'^[\w\d\.\s\:\-\*<>@]+?Date: ([\w\d\s\,\:\-()]+?)\*\-\*.*?X-From: (.*?)\*\-\*X-To: (.*?)\*\-\*.*?FileName: (.*)$')
 
 def process_content(content):
     """
         Process the content and pick out any verbs and nouns that may be important.
+
+        Arguments:
+            - content: a string of message
     """
     Processor = nlp.StanfordNLP()
     result = Processor.pos(content)
@@ -20,16 +23,34 @@ def process_content(content):
     return words
 
 def insert_database(db, info):
-    pass
+    """
+        Insert info into the database.
 
-def parse_mail(email, path, db):
+        Arguments:
+            - db: database
+            - info: a dictionary of information, e.g.
+                    {
+                        "date": 'Wed, 13 Dec 2000 07:04:00 -0800 (PST)',
+                        "sender": 'Phillip K Allen',
+                        "receiver": ['Christi L Nicolay', ...],
+                        "body": 'Attached are two files ...'
+                    }
+    """
+    print(info)
+
+def parse_mail(email, db):
     """
         Parse the information in the emails using regualr expression.
+
+        Arguments:
+            - email: raw content of an email
+            - db: database
     """
     m = regex.match(email)
     try:
         date, sender, receiver, body = m.group(1), m.group(2), m.group(3), m.group(4)
     except AttributeError as e:
+        db.close()
         print("Regular expression can't match anything. Some formatting issues in the raw emails occurred!")
         print("The email that caused the error:", email)
         print("Error code: ", e)
@@ -78,16 +99,9 @@ def filter_emails(db):
         words = []
         for email in emails:
             with open(email, 'r') as f:
-                words = words + parse_mail(f.read().replace('\\', ' ').replace('\n', "*-*"), pathToFolder, db)
+                words = words + parse_mail(f.read().replace('\\', ' ').replace('\n', "*-*"), db)
         # Write words to a csv file.
-        with open(os.path.join(pathToFolder, "mail.csv"), 'w') as f:
-            f.write(", ".join(words))
+        # with open(os.path.join(pathToFolder, "mail.csv"), 'w') as f:
+        #     f.write(", ".join(words))
 
     return employeeFolders
-
-
-if __name__ == "__main__":
-    usr, pwd, enron = login_server()
-    enron = create_database(usr, pwd, enron)
-    # filter_emails(enron)
-    enron.close()

@@ -31,6 +31,10 @@ def drop_receive(db):
     cur.close()
 
 def drop_all(db):
+    confirm = input("Are you sure you want to drop all the tables? (y/n): ")
+    if confirm != 'y':
+        print("Cancelled dropping tables.")
+        return
     drop_send(db)
     drop_receive(db)
     drop_messages(db)
