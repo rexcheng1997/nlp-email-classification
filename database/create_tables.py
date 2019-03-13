@@ -49,7 +49,7 @@ def create_send(db):
                 eid INT NOT NULL UNIQUE,
                 date VARCHAR(100) NOT NULL,
                 FOREIGN KEY (mid) REFERENCES Messages(mid) ON DELETE CASCADE,
-                FOREIGH KEY (eid) REFERENCES Employees(eid) ON DELETE NO ACTION
+                FOREIGN KEY (eid) REFERENCES Employees(eid) ON DELETE NO ACTION
             )
             """
         )
