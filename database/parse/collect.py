@@ -7,6 +7,7 @@ __author__ = "rexcheng"
 
 import sys, os, re
 from . import nlp_wrapper as nlp
+from ..insert_data import insert_employee
 
 regex = re.compile(r'^[\w\d\.\s\:\-\*<>@]+?Date: ([\w\d\s\,\:\-()]+?)\*\-\*.*?X-From: (.*?)\*\-\*X-To: (.*?)\*\-\*.*?FileName: (.*)$')
 
@@ -36,7 +37,7 @@ def insert_database(db, info):
                         "body": 'Attached are two files ...'
                     }
     """
-    print(info)
+    insert_employee(db, info["sender"])
 
 def parse_mail(email, db):
     """
