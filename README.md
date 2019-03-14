@@ -1,6 +1,6 @@
 # NLP Email Classification
 
-Analyze the body messages of the emails and classify them based on purpose.
+Classify the emails by their senders, receivers, date, and purpose.
 
 
 ## Dataset Used
@@ -10,9 +10,39 @@ Analyze the body messages of the emails and classify them based on purpose.
     May 7, 2015 Version of dataset (about 1.7GB). [Click Here to Download](http://www.cs.cmu.edu/~enron/enron_mail_20150507.tar.gz).
 
 
+## Quick Guide to Run the Script
+
+**IMPORTANT NOTE**: You need to have `Java 1.8+`, `Python 3`, `MySQL Server`, `Stanford CoreNLP`, `stanfordcorenlp`, `scikit-learn`, and  `pandas` on your computer to run this script. The last three are Python libraries. If you don't have them all, it will take a long time to set them up :coffee:.
+
+1. Download the Enron email dataset from the link in the __Dataset Used__ section. Unzip the file into the current directory where the source files are placed.
+
+    You should see a new folder called *maildir* in the current directory after you unzipped the file. *Don't make any changes to this folder!*
+
+2. Launch your MySQL server manually.
+
+    In **Ubuntu**, you can start the server by typing the following command in your terminal:  
+    `$ sudo service mysql start`  
+    Enter your password when prompted.
+
+    In **Windows 10**, you need to go to the folder where MySQL is installed. The path is something like `path\to\MySQL\MySQL Server 8.0\bin\`. Find the executable file called `mysqld.exe`. Double click it to run the server.  
+    You should see a terminal poped out with nothing showing in it.
+
+3. Launch the Stanford CoreNLP server manually.
+
+    Go to the folder where the Java code of Stanford CoreNLP is located. Run the following command in the terminal:  
+    `$ java -mx4g -cp "*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer -annotators "tokenize,ssplit,pos,lemma,parse,sentiment" -port 9000 -timeout 30000`  
+    You should see some feedback in the terminal saying the server has been started at port *9000*.
+
+4. Run the Python script.
+
+    Type the following command in the terminal (the current path should be the directory where the source code is placed):  
+    In **Ubuntu**, `$ python3 driver.py`  
+    In **Windows 10**, `> py driver.py`
+
+
 ## Quick Guide of Changing MySQL Data Directory
 
-This tutorial is only for ubuntu users. For reference, [click this link](https://www.digitalocean.com/community/tutorials/how-to-move-a-mysql-data-directory-to-a-new-location-on-ubuntu-16-04).
+This tutorial is only for *Ubuntu* users. For reference, [click this link](https://www.digitalocean.com/community/tutorials/how-to-move-a-mysql-data-directory-to-a-new-location-on-ubuntu-16-04).
 
 ### Check the current data directory
 
