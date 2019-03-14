@@ -27,7 +27,7 @@ def create_messages(db):
         cur.execute("""
             CREATE TABLE Messages (
                 mid INT AUTO_INCREMENT PRIMARY KEY,
-                content VARCHAR(1200) NOT NULL
+                content VARCHAR(3500) NOT NULL
             )
             """
         )
