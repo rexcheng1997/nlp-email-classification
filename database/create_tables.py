@@ -12,10 +12,7 @@ def create_employees(db):
         cur.execute("""
             CREATE TABLE Employees (
                 eid INT AUTO_INCREMENT PRIMARY KEY,
-                name VARCHAR(50) NOT NULL
-                CHECK (name NOT IN (
-                    SELECT name FROM Employees
-                    )
+                name VARCHAR(50) NOT NULL UNIQUE
                 )
             )
             """
