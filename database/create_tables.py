@@ -13,7 +13,6 @@ def create_employees(db):
             CREATE TABLE Employees (
                 eid INT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(50) NOT NULL UNIQUE
-                )
             )
             """
         )

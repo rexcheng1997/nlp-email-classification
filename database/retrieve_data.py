@@ -8,11 +8,8 @@ import mysql.connector as connector
 
 def get_current_id(db, table):
     cur = db.cursor()
-    cur.execute("""
-        SELECT COUNT(*) FROM %s
-        """,
-        (table, )
-    )
+    sql = "SELECT COUNT(*) FROM " + table
+    cur.execute(sql)
     result = cur.fetchall()
     cur.close()
     return result[0][0]
