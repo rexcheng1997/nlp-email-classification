@@ -7,7 +7,7 @@ __author__ = "rexcheng"
 
 import sys, os, re
 from . import nlp_wrapper as nlp
-from ..insert_data import insert_employee
+from ..insert_data import *
 
 regex = re.compile(r'^[\w\d\.\s\:\-\*<>@]+?Date: ([\w\d\s\,\:\-()]+?)\*\-\*.*?X-From: (.*?)\*\-\*X-To: (.*?)\*\-\*.*?FileName: (.*)$')
 
@@ -37,7 +37,12 @@ def insert_database(db, info):
                         "body": 'Attached are two files ...'
                     }
     """
-    insert_employee(db, info["sender"])
+    eid = insert_employee(db, info["sender"])
+    mid = insert_message(db, info["body"])
+    for receiver in info["receiver"]:
+        rid = insert_employee(db, receiver)
+        insert_receive(db, mid, rid)
+    insert_send(db, mid, eid, info["date"])
 
 def parse_mail(email, db):
     """
@@ -64,7 +69,7 @@ def parse_mail(email, db):
     insert_database(db, {
         "date": date,
         "sender": sender,
-        "receiver": receiver,
+        "receiver": receiver.split(", "),
         "body": msg
     })
     # content is what we feed into the NLP process.
