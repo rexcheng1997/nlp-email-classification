@@ -10,6 +10,7 @@ from . import nlp_wrapper as nlp
 from ..insert_data import *
 
 regex = re.compile(r'^[\w\d\.\s\:\-\*<>@]+?Date: ([\w\d\s\,\:\-()]+?)\*\-\*.*?X-From: (.*?)\*\-\*X-To: (.*?)\*\-\*.*?FileName: (.*)$')
+malname = re.compile(r'\"(.*?)\".*')
 
 def process_content(content):
     """
@@ -54,13 +55,19 @@ def parse_mail(email, db):
     """
     m = regex.match(email)
     try:
-        date, sender, receiver, body = m.group(1), m.group(2), m.group(3), m.group(4)
+        date, sender, receiver, body = m.group(1), m.group(2), m.group(3).split(", "), m.group(4)
     except AttributeError as e:
         db.close()
         print("Regular expression can't match anything. Some formatting issues in the raw emails occurred!")
         print("The email that caused the error:", email)
         print("Error code: ", e)
         exit()
+
+    if '\"' in sender:
+        sender = malname.match(sender).group(1)
+    for i in range(len(receiver)):
+        if '\"' in receiver[i]:
+            receiver[i] = malname.match(receiver[i]).group(1)
 
     contentList = [x.replace("   ", '') for x in body.split("*-*") if x != ''][1:]
     # msg is the well-formatted body message of the emails, which will be stored in the database.
@@ -69,7 +76,7 @@ def parse_mail(email, db):
     insert_database(db, {
         "date": date,
         "sender": sender,
-        "receiver": receiver.split(", "),
+        "receiver": receiver,
         "body": msg
     })
     # content is what we feed into the NLP process.
@@ -107,7 +114,8 @@ def filter_emails(db):
             with open(email, 'r') as f:
                 words = words + parse_mail(f.read().replace('\\', ' ').replace('\n', "*-*"), db)
         # Write words to a csv file.
-        # with open(os.path.join(pathToFolder, "mail.csv"), 'w') as f:
-        #     f.write(", ".join(words))
+        with open(os.path.join(pathToFolder, "mail.txt"), 'w') as f:
+            f.write(" ".join(words))
+            print("Wrote to file", os,path.join(pathToFolder, "mail.txt"))
 
     return employeeFolders

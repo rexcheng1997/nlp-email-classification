@@ -6,6 +6,7 @@ __author__ = "rexcheng"
 
 import mysql.connector as connector
 from .retrieve_data import get_current_id, fetch_eid
+from .alter_tables import alter_sequence
 
 def insert_employee(db, name):
     cur = db.cursor()
@@ -20,7 +21,13 @@ def insert_employee(db, name):
         print(cur.rowcount, "row inserted in Employees.")
     except connector.errors.IntegrityError as e:
         cur.close()
+        alter_sequence(db, "Employees", get_current_id(db, "Employees") + 1)
         return fetch_eid(db, name)
+    except connector.errors.DataError as e:
+        cur.close()
+        db.close()
+        print("Employee name that caused the error:", name)
+        print("Error code:", e)
     cur.close()
     return get_current_id(db, "Employees")
 
@@ -37,6 +44,11 @@ def insert_message(db, content):
         print(cur.rowcount, "row inserted in Messages.")
     except connector.errors.IntegrityError as e:
         pass
+    except connector.errors.DataError as e:
+        cur.close()
+        db.close()
+        print("Message content that caused the error:", content)
+        print("Error code:", e)
     cur.close()
     return get_current_id(db, "Messages")
 
@@ -53,6 +65,11 @@ def insert_send(db, mid, eid, date):
         print(cur.rowcount, "row inserted in Send.")
     except connector.errors.IntegrityError as e:
         pass
+    except connector.errors.DataError as e:
+        cur.close()
+        db.close()
+        print("Sent date that caused the error:", date)
+        print("Error code:", e)
     cur.close()
 
 def insert_receive(db, mid, eid):

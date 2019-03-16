@@ -27,7 +27,7 @@ def create_messages(db):
         cur.execute("""
             CREATE TABLE Messages (
                 mid INT AUTO_INCREMENT PRIMARY KEY,
-                content VARCHAR(3500) NOT NULL
+                content VARCHAR(12000) NOT NULL
             )
             """
         )
@@ -42,7 +42,8 @@ def create_send(db):
         cur.execute("""
             CREATE TABLE Send (
                 mid INT PRIMARY KEY,
-                eid INT NOT NULL UNIQUE,
+                eid INT NOT NULL,
+                UNIQUE (mid, eid),
                 date VARCHAR(50) NOT NULL,
                 FOREIGN KEY (mid) REFERENCES Messages(mid) ON DELETE CASCADE,
                 FOREIGN KEY (eid) REFERENCES Employees(eid) ON DELETE NO ACTION
