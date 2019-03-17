@@ -12,7 +12,7 @@ def create_employees(db):
         cur.execute("""
             CREATE TABLE Employees (
                 eid INT AUTO_INCREMENT PRIMARY KEY,
-                name VARCHAR(50) NOT NULL UNIQUE
+                name VARCHAR(80) NOT NULL UNIQUE
             )
             """
         )
@@ -27,7 +27,7 @@ def create_messages(db):
         cur.execute("""
             CREATE TABLE Messages (
                 mid INT AUTO_INCREMENT PRIMARY KEY,
-                content VARCHAR(12000) NOT NULL
+                content TEXT(26000) NOT NULL
             )
             """
         )

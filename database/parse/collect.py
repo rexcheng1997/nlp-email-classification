@@ -11,6 +11,7 @@ from ..insert_data import *
 
 regex = re.compile(r'^[\w\d\.\s\:\-\*<>@]+?Date: ([\w\d\s\,\:\-()]+?)\*\-\*.*?X-From: (.*?)\*\-\*X-To: (.*?)\*\-\*.*?FileName: (.*)$')
 malname = re.compile(r'\"(.*?)\".*')
+cuttail = re.compile(r'(.*?)\".*')
 
 def process_content(content):
     """
@@ -21,7 +22,7 @@ def process_content(content):
     """
     Processor = nlp.StanfordNLP()
     result = Processor.pos(content)
-    words = [w[0] for w in result if (len(w[0]) > 1 and len(w[0]) < 21) and ("VB" in w[1] or "NN" in w[1])]
+    words = [w[0] for w in result if (len(w[0]) > 2 and len(w[0]) < 21) and ("VB" in w[1] or "NN" in w[1])]
     return words
 
 def insert_database(db, info):
@@ -60,18 +61,29 @@ def parse_mail(email, db):
         db.close()
         print("Regular expression can't match anything. Some formatting issues in the raw emails occurred!")
         print("The email that caused the error:", email)
-        print("Error code: ", e)
+        print("Error code:", e)
         exit()
+
+    contentList = [x.replace("   ", '') for x in body.split("*-*") if x != ''][1:]
+    # content is what we feed into the NLP process.
+    content = ' '.join(contentList).replace("  ", ' ')
+    # msg is the well-formatted body message of the emails, which will be stored in the database.
+    msg = '\n'.join(contentList).replace("  ", ' ')
 
     if '\"' in sender:
         sender = malname.match(sender).group(1)
+    zombie = []
     for i in range(len(receiver)):
-        if '\"' in receiver[i]:
+        if receiver[i][0] != '\"':
+            continue
+        if '\"' not in receiver[i][1:]:
+            receiver[i + 1] = cuttail.match(receiver[i + 1]).group(1) + ' ' + receiver[i][1:]
+            zombie.append(receiver[i])
+        else:
             receiver[i] = malname.match(receiver[i]).group(1)
+    for z in zombie:
+        receiver.remove(z)
 
-    contentList = [x.replace("   ", '') for x in body.split("*-*") if x != ''][1:]
-    # msg is the well-formatted body message of the emails, which will be stored in the database.
-    msg = '\n'.join(contentList).replace("  ", ' ')
     # Insert the information into the database.
     insert_database(db, {
         "date": date,
@@ -79,10 +91,8 @@ def parse_mail(email, db):
         "receiver": receiver,
         "body": msg
     })
-    # content is what we feed into the NLP process.
-    content = ' '.join(contentList).replace("  ", ' ')
-    words = process_content(content)
-    return words
+
+    return process_content(content)
 
 def filter_emails(db):
     """
@@ -108,7 +118,7 @@ def filter_emails(db):
             )
             if os.path.isfile(x)
         ]
-        # Words to be written into the csv file.
+        # Words to be written into the txt file.
         words = []
         for email in emails:
             with open(email, 'r') as f:
@@ -116,6 +126,6 @@ def filter_emails(db):
         # Write words to a csv file.
         with open(os.path.join(pathToFolder, "mail.txt"), 'w') as f:
             f.write(" ".join(words))
-            print("Wrote to file", os,path.join(pathToFolder, "mail.txt"))
+            print("Wrote to file", os.path.join(pathToFolder, "mail.txt"))
 
     return employeeFolders
