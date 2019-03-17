@@ -9,7 +9,7 @@ import sys, os, re
 from . import nlp_wrapper as nlp
 from ..insert_data import *
 
-regex = re.compile(r'^[\w\d\.\s\:\-\*<>@]+?Date: ([\w\d\s\,\:\-()]+?)\*\-\*.*?X-From: (.*?)\*\-\*X-To: (.*?)\*\-\*.*?FileName: (.*)$')
+regex = re.compile(r'^[\w\d\.\s\:\-\*<>@]+?Date: ([\w\d\s\,\:\-()]+?)\*\-\*.*?X-From: (.*?)\*\-\*X-To: (.*?)\*\-\*X-cc: (.*?)\*\-\*.*?FileName: (.*)$')
 malname = re.compile(r'\"(.*?)\".*')
 cuttail = re.compile(r'(.*?)\".*')
 
@@ -56,7 +56,9 @@ def parse_mail(email, db):
     """
     m = regex.match(email)
     try:
-        date, sender, receiver, body = m.group(1), m.group(2), m.group(3).split(", "), m.group(4)
+        date, sender, receiver, backup, body = m.group(1), m.group(2), m.group(3).split(", "), m.group(4).split(", "), m.group(5)
+        if receiver[0] == '':
+            receiver = backup
     except AttributeError as e:
         db.close()
         print("Regular expression can't match anything. Some formatting issues in the raw emails occurred!")
