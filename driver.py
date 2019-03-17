@@ -14,12 +14,12 @@ usr, pwd, enron = login_server()
 enron = create_database(usr, pwd, enron)
 
 # Uncomment the following line if you want to drop all the tables.
-# drop_all(enron)
+drop_all(enron)
 
 # Create all the tables needed.
 create_all(enron)
 
 # Fetch and process all the emails.
-filter_emails(enron)
+employeeFolders = filter_emails(enron)
 
 enron.close()
