@@ -74,6 +74,7 @@ def parse_mail(email, db):
     # msg is the well-formatted body message of the emails, which will be stored in the database.
     msg = '\n'.join(contentList).replace("  ", ' ')
 
+    # Make the employees' names look more pretty.
     if '\"' in sender:
         sender = malname.match(sender).group(1)
     zombie = []
