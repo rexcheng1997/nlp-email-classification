@@ -109,6 +109,9 @@ def parse_mail(email, db):
 def filter_emails(db):
     """
         Retrieve all the emails from the dataset.
+
+        Arguments:
+            - db: database
     """
     # Get the absolute path for the current directory.
     currentDir = os.path.abspath('.')
