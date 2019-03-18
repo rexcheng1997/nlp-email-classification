@@ -9,6 +9,7 @@ from database import login_server, create_database
 from database.create_tables import create_all
 from database.drop_tables import drop_all
 from database.parse.collect import filter_emails
+from machine_learning.analyze import analyze
 import machine_learning as ml
 
 
@@ -27,12 +28,19 @@ create_all(enron)
 # Fetch and process all the emails.
 employeeFolders = filter_emails(enron)
 
-employees, files = ml.fetch_files(employeeFolders)
+# import os
+# datasetDir = os.path.join(os.path.abspath('.'), "maildir")
+# employeeFolders = [os.path.join(datasetDir, f) for f in os.listdir(datasetDir)]
+
+# Fetch file paths for "mail.txt".
+# employees, files = ml.fetch_files(employeeFolders)
 
 # Create pandas DataFrame for the machine learning data.
-mlDF = pandas.DataFrame(data={
-    "employee": employees,
-    "words": [f.read() for f in files]
-})
+# mlDF = pandas.DataFrame(data={
+#     "employee": employees,
+#     "words": list(map(ml.read_file, files))
+# })
+
+# analyze(mlDF)
 
 enron.close()
