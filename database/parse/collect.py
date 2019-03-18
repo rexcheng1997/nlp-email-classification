@@ -12,6 +12,8 @@ from ..insert_data import *
 regex = re.compile(r'^[\w\d\.\s\:\-\*<>@]+?Date: ([\w\d\s\,\:\-()]+?)\*\-\*.*?X-From: (.*?)\*\-\*X-To: (.*?)\*\-\*X-cc: (.*?)\*\-\*.*?FileName: (.*)$')
 malname = re.compile(r'\"(.*?)\".*')
 cuttail = re.compile(r'(.*?)\".*')
+simplify1 = re.compile(r' ?@ ?ENRON')
+simplify2 = re.compile(r' ?<.*?>')
 
 def process_content(content):
     """
@@ -72,13 +74,21 @@ def parse_mail(email, db):
     # msg is the well-formatted body message of the emails, which will be stored in the database.
     msg = '\n'.join(contentList).replace("  ", ' ')
 
+    # Make the employees' names look more pretty.
     if '\"' in sender:
         sender = malname.match(sender).group(1)
     zombie = []
     for i in range(len(receiver)):
         if receiver[i][0] != '\"':
             continue
-        if '\"' not in receiver[i][1:]:
+        if receiver[i][-1] == 'N':
+            receiver[i] = simplify1.sub('', receiver[i])
+        elif receiver[i][-1] == '>':
+            if receiver[i][0] == '<':
+                receiver[i] = receiver[i][1:-1]
+            else:
+                receiver[i] = simplify2.sub('', receiver[i])
+        elif '\"' not in receiver[i][1:]:
             receiver[i + 1] = cuttail.match(receiver[i + 1]).group(1) + ' ' + receiver[i][1:]
             zombie.append(receiver[i])
         else:
@@ -99,6 +109,9 @@ def parse_mail(email, db):
 def filter_emails(db):
     """
         Retrieve all the emails from the dataset.
+
+        Arguments:
+            - db: database
     """
     # Get the absolute path for the current directory.
     currentDir = os.path.abspath('.')
