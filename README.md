@@ -39,6 +39,8 @@ Classify the emails by their senders, receivers, date, and purpose.
     In *Ubuntu*, `$ python3 driver.py`  
     In *Windows 10*, `> py driver.py`
 
+**CAUTION**: It will take more than 24 hours to read and write all the dataset into the database in the disk. Please leave enough time to your computer if you decide to run the script.
+
 
 ## Quick Guide to Change MySQL Data Directory
 
