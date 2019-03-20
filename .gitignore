@@ -1,1 +1,5 @@
+# Ignore the dataset directory.
 maildir/
+
+# Ignore the Python compile files if any
+**/__pycache__/

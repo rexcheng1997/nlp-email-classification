@@ -5,15 +5,13 @@
 
 __author__ = "rexcheng"
 
-import sys, os, re
+import sys, os, re, json
 from . import nlp_wrapper as nlp
 from ..insert_data import *
 
-regex = re.compile(r'^[\w\d\.\s\:\-\*<>@]+?Date: ([\w\d\s\,\:\-()]+?)\*\-\*.*?X-From: (.*?)\*\-\*X-To: (.*?)\*\-\*X-cc: (.*?)\*\-\*.*?FileName: (.*)$')
-malname = re.compile(r'\"(.*?)\".*')
-cuttail = re.compile(r'(.*?)\".*')
-simplify1 = re.compile(r' ?@ ?ENRON')
-simplify2 = re.compile(r' ?<.*?>')
+regex = re.compile(r'^.*?Date: (.*?)\*\-\*From: (.*?)\*\-\*T?o?:? ?(.*?)\*?\-?\*?Subject: .*?X-To: (.*?)\*\-\*.*?FileName: .*?\*\-\*(.*)$')
+pick = re.compile(r'^.*?<\.(.*?)>$')
+special = re.compile(r'^.*?Cc: (.*?)\*\-\*.*$')
 
 def process_content(content):
     """
@@ -23,8 +21,11 @@ def process_content(content):
             - content: a string of message
     """
     Processor = nlp.StanfordNLP()
-    result = Processor.pos(content)
-    words = [w[0] for w in result if (len(w[0]) > 2 and len(w[0]) < 21) and ("VB" in w[1] or "NN" in w[1])]
+    try:
+        result = Processor.pos(content)
+        words = [w[0] for w in result if (len(w[0]) > 2 and len(w[0]) < 21) and ("VB" in w[1] or "NN" in w[1])]
+    except json.decoder.JSONDecodeError as e:
+        words = content.split(' ')
     return words
 
 def insert_database(db, info):
@@ -36,8 +37,8 @@ def insert_database(db, info):
             - info: a dictionary of information, e.g.
                     {
                         "date": 'Wed, 13 Dec 2000 07:04:00 -0800 (PST)',
-                        "sender": 'Phillip K Allen',
-                        "receiver": ['Christi L Nicolay', ...],
+                        "sender": 'phillip.allen@enron.com',
+                        "receiver": ['christi.nicolay@enron.com', ...],
                         "body": 'Attached are two files ...'
                     }
     """
@@ -58,9 +59,11 @@ def parse_mail(email, db):
     """
     m = regex.match(email)
     try:
-        date, sender, receiver, backup, body = m.group(1), m.group(2), m.group(3).split(", "), m.group(4).split(", "), m.group(5)
-        if receiver[0] == '':
+        date, sender, receiver, backup, body = m.group(1), m.group(2), m.group(3).replace("*-*", '').split(", "), m.group(4).split(", "), m.group(5)
+        if receiver[0] == '' and backup[0] != '':
             receiver = backup
+        elif receiver[0] == '' and backup[0] == '':
+            receiver = special.match(email).group(1).split(", ")
     except AttributeError as e:
         db.close()
         print("Regular expression can't match anything. Some formatting issues in the raw emails occurred!")
@@ -68,32 +71,23 @@ def parse_mail(email, db):
         print("Error code:", e)
         exit()
 
-    contentList = [x.replace("   ", '') for x in body.split("*-*") if x != ''][1:]
+    contentList = [x.replace("   ", '') for x in body.split("*-*") if x != '']
     # content is what we feed into the NLP process.
     content = ' '.join(contentList).replace("  ", ' ')
     # msg is the well-formatted body message of the emails, which will be stored in the database.
     msg = '\n'.join(contentList).replace("  ", ' ')
 
-    # Make the employees' names look more pretty.
-    if '\"' in sender:
-        sender = malname.match(sender).group(1)
-    zombie = []
+    # Make the employees' email addresses look more pretty.
+    zombies = []
     for i in range(len(receiver)):
-        if receiver[i][0] != '\"':
-            continue
-        if receiver[i][-1] == 'N':
-            receiver[i] = simplify1.sub('', receiver[i])
-        elif receiver[i][-1] == '>':
-            if receiver[i][0] == '<':
-                receiver[i] = receiver[i][1:-1]
-            else:
-                receiver[i] = simplify2.sub('', receiver[i])
-        elif '\"' not in receiver[i][1:]:
-            receiver[i + 1] = cuttail.match(receiver[i + 1]).group(1) + ' ' + receiver[i][1:]
-            zombie.append(receiver[i])
-        else:
-            receiver[i] = malname.match(receiver[i]).group(1)
-    for z in zombie:
+        if receiver[i][-1] == '>':
+            try:
+                receiver[i] = pick.match(receiver[i]).group(1)
+            except AttributeError as e:
+                zombies.append(receiver[i])
+        elif receiver[i][-1] == '\'':
+            receiver[i] = receiver[i].replace('\'', '')
+    for z in zombies:
         receiver.remove(z)
 
     # Insert the information into the database.
@@ -120,11 +114,20 @@ def filter_emails(db):
     # Get all the folders in the dataset.
     employeeFolders = [os.path.join(datasetDir, f) for f in os.listdir(datasetDir)]
     # For each employee, fetch all his/her emails.
+    count = 1
     for pathToFolder in employeeFolders:
+        if count <= 19:
+            count += 1
+            continue
+        if count > 20:
+            break
+        count += 1
         if "sent" in os.listdir(pathToFolder):
             emailFolder = os.path.join(pathToFolder, "sent")
         elif "_sent_mail" in os.listdir(pathToFolder):
             emailFolder = os.path.join(pathToFolder, "_sent_mail")
+        elif "sent_items" in os.listdir(pathToFolder):
+            emailFolder = os.path.join(pathToFolder, "sent_items")
         else:
             continue
         emails = [x for x in map(
@@ -137,7 +140,7 @@ def filter_emails(db):
         words = []
         for email in emails:
             with open(email, 'r') as f:
-                words = words + parse_mail(f.read().replace('\\', ' ').replace('\n', "*-*"), db)
+                words = words + parse_mail(f.read().replace('\\', ' ').replace('\n', "*-*").replace('\t', "*-*"), db)
         # Write words to a csv file.
         with open(os.path.join(pathToFolder, "mail.txt"), 'w') as f:
             f.write(" ".join(words))
