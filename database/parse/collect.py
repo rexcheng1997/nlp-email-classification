@@ -5,12 +5,13 @@
 
 __author__ = "rexcheng"
 
-import sys, os, re
+import sys, os, re, json
 from . import nlp_wrapper as nlp
 from ..insert_data import *
 
-regex = re.compile(r'^.*?Date: (.*?)\*\-\*From: (.*?)\*\-\*T?o?:? ?(.*?)\*?\-?\*?Subject: .*?X-To: (.*?)\*\-\*.*?FileName: (.*)$')
+regex = re.compile(r'^.*?Date: (.*?)\*\-\*From: (.*?)\*\-\*T?o?:? ?(.*?)\*?\-?\*?Subject: .*?X-To: (.*?)\*\-\*.*?FileName: .*?\*\-\*(.*)$')
 pick = re.compile(r'^.*?<\.(.*?)>$')
+special = re.compile(r'^.*?Cc: (.*?)\*\-\*.*$')
 
 def process_content(content):
     """
@@ -20,8 +21,11 @@ def process_content(content):
             - content: a string of message
     """
     Processor = nlp.StanfordNLP()
-    result = Processor.pos(content)
-    words = [w[0] for w in result if (len(w[0]) > 2 and len(w[0]) < 21) and ("VB" in w[1] or "NN" in w[1])]
+    try:
+        result = Processor.pos(content)
+        words = [w[0] for w in result if (len(w[0]) > 2 and len(w[0]) < 21) and ("VB" in w[1] or "NN" in w[1])]
+    except json.decoder.JSONDecodeError as e:
+        words = content.split(' ')
     return words
 
 def insert_database(db, info):
@@ -56,8 +60,10 @@ def parse_mail(email, db):
     m = regex.match(email)
     try:
         date, sender, receiver, backup, body = m.group(1), m.group(2), m.group(3).replace("*-*", '').split(", "), m.group(4).split(", "), m.group(5)
-        if receiver[0] == '':
+        if receiver[0] == '' and backup[0] != '':
             receiver = backup
+        elif receiver[0] == '' and backup[0] == '':
+            receiver = special.match(email).group(1).split(", ")
     except AttributeError as e:
         db.close()
         print("Regular expression can't match anything. Some formatting issues in the raw emails occurred!")
@@ -65,16 +71,24 @@ def parse_mail(email, db):
         print("Error code:", e)
         exit()
 
-    contentList = [x.replace("   ", '') for x in body.split("*-*") if x != ''][1:]
+    contentList = [x.replace("   ", '') for x in body.split("*-*") if x != '']
     # content is what we feed into the NLP process.
     content = ' '.join(contentList).replace("  ", ' ')
     # msg is the well-formatted body message of the emails, which will be stored in the database.
     msg = '\n'.join(contentList).replace("  ", ' ')
 
     # Make the employees' email addresses look more pretty.
+    zombies = []
     for i in range(len(receiver)):
         if receiver[i][-1] == '>':
-            receiver[i] = pick.match(receiver[i]).group(1)
+            try:
+                receiver[i] = pick.match(receiver[i]).group(1)
+            except AttributeError as e:
+                zombies.append(receiver[i])
+        elif receiver[i][-1] == '\'':
+            receiver[i] = receiver[i].replace('\'', '')
+    for z in zombies:
+        receiver.remove(z)
 
     # Insert the information into the database.
     insert_database(db, {
@@ -102,10 +116,10 @@ def filter_emails(db):
     # For each employee, fetch all his/her emails.
     count = 1
     for pathToFolder in employeeFolders:
-        if count <= 6:
+        if count <= 19:
             count += 1
             continue
-        if count > 7:
+        if count > 20:
             break
         count += 1
         if "sent" in os.listdir(pathToFolder):
