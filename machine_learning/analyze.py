@@ -10,7 +10,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
 from sklearn.cluster import KMeans
 
 def analyze(df):
-    stopWords = ENGLISH_STOP_WORDS.union(["ees", "com", "et", "hou", "ect"])
+    stopWords = ENGLISH_STOP_WORDS.union(["ees", "com", "et", "hou", "ect", "-e-"])
     vect = TfidfVectorizer(analyzer='word', stop_words=stopWords, max_df=0.9, min_df=2)
     X = vect.fit_transform(df.words)
     features = vect.get_feature_names()
