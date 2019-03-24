@@ -12,7 +12,17 @@ Classify the emails by their senders, receivers, date, and purpose.
 
 ## Quick Guide to Run the Script
 
-**IMPORTANT NOTE**: You need to have `Java 1.8+`, `Python 3`, `MySQL Server`, `Stanford CoreNLP`, `stanfordcorenlp`, `scikit-learn`, and  `pandas` on your computer to run this script. The last three are Python libraries. If you don't have them all, it will take a long time to set them up. :coffee:
+### Requirements:
+
+* Java 1.8+
+* Python 3
+* MySQL Server
+* Stanford CoreNLP (java version)
+* Python libraries: `stanfordcorenlp`, `scikit-learn`, `pandas`, `matplotlib`
+
+**NOTE**: If you don't have them all, it will take a long time to set them up. :coffee:
+
+### Steps:
 
 1. Download the Enron email dataset from the link in the __Dataset Used__ section. Unzip the file into the current directory where the source files are placed.
 
