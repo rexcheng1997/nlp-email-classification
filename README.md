@@ -1,6 +1,6 @@
 # NLP Email Classification
 
-Classify the emails by their senders, receivers, date, and purpose.
+Classify the emails by their senders, receivers, date, and purposes.
 
 
 ## Dataset Used
