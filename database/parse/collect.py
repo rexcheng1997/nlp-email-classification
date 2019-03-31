@@ -63,13 +63,17 @@ def parse_mail(email, db):
         if receiver[0] == '' and backup[0] != '':
             receiver = backup
         elif receiver[0] == '' and backup[0] == '':
-            receiver = special.match(email).group(1).split(", ")
+            mm = special.match(email)
+            if mm == None:
+                receiver = []
+            else:
+                receiver = mm.group(1).split(", ")
     except AttributeError as e:
         db.close()
         print("Regular expression can't match anything. Some formatting issues in the raw emails occurred!")
         print("The email that caused the error:", email)
         print("Error code:", e)
-        exit()
+        exit(1)
 
     contentList = [x.replace("   ", '') for x in body.split("*-*") if x != '']
     # content is what we feed into the NLP process.
@@ -80,6 +84,9 @@ def parse_mail(email, db):
     # Make the employees' email addresses look more pretty.
     zombies = []
     for i in range(len(receiver)):
+        if receiver[i] == '':
+            zombies.append(receiver[i])
+            continue
         if receiver[i][-1] == '>':
             try:
                 receiver[i] = pick.match(receiver[i]).group(1)
@@ -114,20 +121,15 @@ def filter_emails(db):
     # Get all the folders in the dataset.
     employeeFolders = [os.path.join(datasetDir, f) for f in os.listdir(datasetDir)]
     # For each employee, fetch all his/her emails.
-    count = 1
     for pathToFolder in employeeFolders:
-        if count <= 19:
-            count += 1
-            continue
-        if count > 20:
-            break
-        count += 1
         if "sent" in os.listdir(pathToFolder):
             emailFolder = os.path.join(pathToFolder, "sent")
         elif "_sent_mail" in os.listdir(pathToFolder):
             emailFolder = os.path.join(pathToFolder, "_sent_mail")
         elif "sent_items" in os.listdir(pathToFolder):
             emailFolder = os.path.join(pathToFolder, "sent_items")
+        elif "inbox" in os.listdir(pathToFolder):
+            emailFolder = os.path.join(pathToFolder, "inbox")
         else:
             continue
         emails = [x for x in map(
@@ -140,10 +142,17 @@ def filter_emails(db):
         words = []
         for email in emails:
             with open(email, 'r') as f:
-                words = words + parse_mail(f.read().replace('\\', ' ').replace('\n', "*-*").replace('\t', "*-*"), db)
+                try:
+                    words += parse_mail(f.read().replace('\\', ' ').replace('\n', "*-*").replace('\t', "*-*"), db)
+                except:
+                    pass
         # Write words to a csv file.
         with open(os.path.join(pathToFolder, "mail.txt"), 'w') as f:
-            f.write(" ".join(words))
+            for word in words:
+                try:
+                    f.write(word + ' ')
+                except:
+                    pass
             print("Wrote to file", os.path.join(pathToFolder, "mail.txt"))
 
     return employeeFolders
